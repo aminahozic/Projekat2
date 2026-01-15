@@ -42,7 +42,12 @@ let nextOblivionTime = 1200;
 
 window.isInAetherZone = false; 
 window.difficultyMode = 'medium'; 
-window.keyPressed = {}; 
+window.keyPressed = {};
+
+function isMobileDevice() {
+    return ('ontouchstart' in window || navigator.maxTouchPoints > 0) && 
+           (window.innerWidth <= 768 || window.innerHeight <= 768);
+} 
 
 let soundEat, soundBoost, soundDefeat, soundStart, soundShield; 
 let soundOblivion, soundRandom; 
@@ -452,8 +457,12 @@ function animate() {
             
             try { if(soundRandom) soundRandom.play(); } catch (e) {} 
             
-            const change = random(-blob.r/3, blob.r/2); 
-            blob.r = Math.max(30, blob.r+change + (change > 0 ? 5 : 0)); 
+            const isMobile = isMobileDevice();
+            const changeRange = isMobile ? blob.r/2 : blob.r;
+            const changeMin = isMobile ? -blob.r/3 : -blob.r/2;
+            const bonus = isMobile ? 5 : 20;
+            const change = random(changeMin, changeRange); 
+            blob.r = Math.max(30, blob.r+change + (change > 0 ? bonus : 0)); 
             flashAlpha = change>0?0.8:0.5;
             
             try {
@@ -468,15 +477,27 @@ function animate() {
     for(let i=chargeOrbs.length-1;i>=0;i--){
         const orb = chargeOrbs[i];
         if (!isInsideOblivion(orb)) orb.draw(ctx);
-        const d = Vector.dist(blob.pos, orb.pos);
-        const touchDistance = blob.r + orb.r;
-        if(blob.r > orb.r && d < touchDistance){
-            chargeOrbs.splice(i,1);
-            lastEatTime = Date.now();
-            try { if(soundBoost)soundBoost.play(); } catch (e) {} 
-            speedCharge++;
-            flashAlpha = 0.4;
-            createFood(1);
+        const isMobile = isMobileDevice();
+        if(isMobile) {
+            const d = Vector.dist(blob.pos, orb.pos);
+            const touchDistance = blob.r + orb.r;
+            if(blob.r > orb.r && d < touchDistance){
+                chargeOrbs.splice(i,1);
+                lastEatTime = Date.now();
+                try { if(soundBoost)soundBoost.play(); } catch (e) {} 
+                speedCharge++;
+                flashAlpha = 0.4;
+                createFood(1);
+            }
+        } else {
+            if(blob.eats(orb)){
+                chargeOrbs.splice(i,1);
+                lastEatTime = Date.now();
+                try { if(soundBoost)soundBoost.play(); } catch (e) {} 
+                speedCharge++;
+                flashAlpha = 0.4;
+                createFood(1);
+            }
         }
     }
 
