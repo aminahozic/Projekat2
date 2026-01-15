@@ -1,6 +1,3 @@
-/* ===============================
-   GLOBALNI RESET I VARIJABLE
-   =============================== */
 :root {
     --primary-color: #ff80df;
     --secondary-color: #8afff5;
@@ -21,11 +18,19 @@ body {
     background-color: var(--dark-bg);
     color: var(--text-color);
     overflow: hidden;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
-/* ===============================
-   LOBBY I DEFEAT EKRAN
-   =============================== */
+#gameCanvas {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 #lobby-ekran, #defeat-screen {
     position: fixed;
     top: 0;
@@ -43,7 +48,6 @@ body {
     padding: 15px;
 }
 
-/* HEADER */
 header {
     margin-bottom: 20px;
     z-index: 2;
@@ -62,9 +66,6 @@ header p {
     color: rgba(255, 255, 255, 0.85);
 }
 
-/* ===============================
-   LOBBY KARTICA / GRID
-   =============================== */
 .card {
     background: var(--card-bg);
     padding: 18px 20px;
@@ -79,10 +80,9 @@ header p {
     border: 1px solid var(--primary-color);
 }
 
-/* FIELD: PORAVNANJE LABELA I INPUTA */
 .field {
     display: grid;
-    grid-template-columns: 35% 1fr; /* Labela zauzima 35%, input ostatak */
+    grid-template-columns: 35% 1fr;
     align-items: center;
     gap: 8px;
 }
@@ -91,7 +91,7 @@ header p {
     font-weight: 500;
     color: var(--secondary-color);
     font-size: 0.9rem;
-    text-align: right; /* Labela desno poravnata */
+    text-align: right;
 }
 
 input[type="text"], select {
@@ -112,7 +112,6 @@ input[type="color"] {
     cursor: pointer;
 }
 
-/* DUGME */
 #pokreni-igru, #restart-game-button, #vrati-u-lobi {
     background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
     color: var(--dark-bg);
@@ -132,7 +131,6 @@ input[type="color"] {
     box-shadow: 0 6px 18px rgba(255, 128, 223, 0.7);
 }
 
-/* SEKUNDARNO DUGME */
 .secondary-btn {
     background: transparent;
     color: var(--secondary-color);
@@ -151,9 +149,6 @@ input[type="color"] {
     color: var(--dark-bg);
 }
 
-/* ===============================
-   ORB POZADINA
-   =============================== */
 .orb {
     position: absolute;
     width: 200px;
@@ -185,9 +180,6 @@ input[type="color"] {
     100% { transform: translate(0, 0) scale(1); }
 }
 
-/* ===============================
-   DEFEAT EKRAN
-   =============================== */
 #defeat-screen {
     background: rgba(30, 0, 41, 0.95);
     display: none;
@@ -207,9 +199,6 @@ input[type="color"] {
     margin-bottom: 15px;
 }
 
-/* ===============================
-   PRAVILA EKRAN (ljepši prikaz)
-   =============================== */
 .full-screen-overlay {
     position: fixed;
     top: 0;
@@ -277,9 +266,6 @@ input[type="color"] {
     color: var(--primary-color);
 }
 
-/* ===============================
-   RESPONSIVNOST
-   =============================== */
 @media (max-width: 1024px) {
     header h1 { font-size: 3rem; }
     .card { max-width: 260px; }
@@ -297,19 +283,16 @@ select {
     color: #ffffff;
 }
 
-/* OPCIJE UNUTAR SELECTA */
 select option {
-    background-color: #331a3d;   /* tamna pozadina */
-    color: #ffffff;              /* BIJELI TEKST */
+    background-color: #331a3d;
+    color: #ffffff;
 }
 
-/* Kada je opcija označena */
 select option:checked {
     background-color: #ff80df;
     color: #1e0029;
 }
 
-/* Hover (neki browseri poštuju) */
 select option:hover {
     background-color: #8afff5;
     color: #1e0029;
