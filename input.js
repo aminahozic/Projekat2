@@ -5,14 +5,10 @@ window.addEventListener('mousemove', (e) => {
     window.mouse.y = e.clientY;
 });
 
-let canvas = null;
 let isGameRunning = false;
 
 function getCanvas() {
-    if (!canvas) {
-        canvas = document.getElementById('gameCanvas');
-    }
-    return canvas;
+    return document.getElementById('gameCanvas');
 }
 
 window.addEventListener('touchstart', (e) => {
