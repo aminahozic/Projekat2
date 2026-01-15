@@ -1,0 +1,207 @@
+class Blob {
+    constructor(x, y, r, color, name = "", isPlayer = false) {
+        this.pos = new Vector(x, y);
+        this.vel = new Vector(0, 0);
+        this.targetPos = this.pos.copy();
+
+        this.r = r;
+        this.color = color;
+        this.name = name;
+        this.isPlayer = isPlayer;
+        this.isHunting = false;
+
+        if (!this.isPlayer) {
+            this.setNewTarget();
+        }
+    }
+
+    setNewTarget() {
+        this.targetPos = new Vector(
+            random(this.pos.x - 600, this.pos.x + 600),
+            random(this.pos.y - 600, this.pos.y + 600)
+        );
+    }
+
+    update(mouse, canvas, boostDuration = 0, controlMode = 'mouse', keys = null, hasShield = false, isInOblivionZone = false) {
+        this.isHunting = false;
+
+        let mult = this.isPlayer ? 1 : window.DIFFICULTY_SETTINGS[window.difficultyMode].npcSpeedMultiplier;
+        let baseSpeed = 9.0 / Math.sqrt(this.r / 30);
+        let minSpeed = this.isPlayer ? 4.5 : 3.5;
+        let maxSpeed = Math.max(baseSpeed, minSpeed) * mult;
+
+        let target = new Vector(0, 0);
+        let lerpFactor = this.isPlayer ? 0.12 : (this.r < 30 ? 0.60 : 0.50);
+
+        if (this.isPlayer && boostDuration > 0) {
+            if(window.isChargeBoost){
+                maxSpeed *= 2.5;
+            } else {
+                maxSpeed *= 1.4;
+            }
+        }
+
+        if (this.isPlayer) {
+
+            if (controlMode === 'mouse') {
+                target = new Vector(
+                    mouse.x - canvas.width / 2,
+                    mouse.y - canvas.height / 2
+                );
+            } else if (controlMode === 'arrows' && keys) {
+                let dx = 0, dy = 0;
+                if (keys.KeyA || keys.ArrowLeft) dx -= 1;
+                if (keys.KeyD || keys.ArrowRight) dx += 1;
+                if (keys.KeyW || keys.ArrowUp) dy -= 1;
+                if (keys.KeyS || keys.ArrowDown) dy += 1;
+                target = new Vector(dx * 1000, dy * 1000);
+            }
+
+        } else {
+            const settings = window.DIFFICULTY_SETTINGS[window.difficultyMode];
+            const player = window.blob;
+            const d = Vector.dist(this.pos, player.pos);
+
+            if (isInOblivionZone) {
+                target = this.targetPos.sub(this.pos);
+            }
+            else {
+                let nameHash = 0;
+                for (let i = 0; i < this.name.length; i++) {
+                    nameHash = ((nameHash << 5) - nameHash) + this.name.charCodeAt(i);
+                    nameHash = nameHash & nameHash;
+                }
+                const isSmart = (Math.abs(nameHash) % 2) === 0;
+                
+                if (!isSmart) {
+                    target = this.targetPos.sub(this.pos);
+                    maxSpeed *= 0.7;
+                    if (Vector.dist(this.pos, this.targetPos) < 150) {
+                        this.setNewTarget();
+                    }
+                } else {
+                    const limit = window.boundary || 5000;
+                    const margin = 300;
+                    const nearEdgeX = Math.abs(this.pos.x - (-limit + margin)) < 100 || Math.abs(this.pos.x - (limit - margin)) < 100;
+                    const nearEdgeY = Math.abs(this.pos.y - (-limit + margin)) < 100 || Math.abs(this.pos.y - (limit - margin)) < 100;
+                    
+                    if (this.r < player.r * 0.95 && d < settings.fleeDistance + this.r * 1.5) {
+                        if (nearEdgeX || nearEdgeY) {
+                            target = this.targetPos.sub(this.pos);
+                            if (Vector.dist(this.pos, this.targetPos) < 150) {
+                                this.setNewTarget();
+                            }
+                        } else {
+                            target = this.pos.sub(player.pos);
+                        }
+                    }
+                    else if (this.r > player.r * 1.2) {
+                        if (Math.random() < settings.npcAggression) {
+                            target = player.pos.sub(this.pos);
+                            this.isHunting = true;
+                            lerpFactor = (this.r < 30 ? 0.50 : 0.40) + settings.npcAggression * 0.1;
+                        } else {
+                            target = this.targetPos.sub(this.pos);
+                            maxSpeed *= 0.7;
+                            if (Vector.dist(this.pos, this.targetPos) < 150) {
+                                this.setNewTarget();
+                            }
+                        }
+                    }
+                    else {
+                        target = this.targetPos.sub(this.pos);
+                        maxSpeed *= 0.7;
+                        if (Vector.dist(this.pos, this.targetPos) < 150) {
+                            this.setNewTarget();
+                        }
+                    }
+                }
+            }
+        }
+
+        target.setMag(maxSpeed);
+        this.vel.lerp(target, lerpFactor);
+        if (!this.isPlayer) {
+            if (this.isHunting) {
+                this.vel.mult(0.999);
+            } else {
+                if (this.r < 30) {
+                    this.vel.mult(0.997);
+                } else {
+                    this.vel.mult(0.995);
+                }
+            }
+        }
+        this.pos.add(this.vel);
+
+        const limit = window.boundary || 5000;
+        const margin = this.isPlayer ? 0 : 300;
+        const oldX = this.pos.x;
+        const oldY = this.pos.y;
+        this.pos.x = constrain(this.pos.x, -limit + margin, limit - margin);
+        this.pos.y = constrain(this.pos.y, -limit + margin, limit - margin);
+        
+        if (!this.isPlayer) {
+            if (oldX !== this.pos.x || oldY !== this.pos.y) {
+                this.vel.x *= 0.3;
+                this.vel.y *= 0.3;
+                if (Math.abs(this.pos.x - (-limit + margin)) < 50 || Math.abs(this.pos.x - (limit - margin)) < 50 ||
+                    Math.abs(this.pos.y - (-limit + margin)) < 50 || Math.abs(this.pos.y - (limit - margin)) < 50) {
+                    this.setNewTarget();
+                }
+            }
+        }
+    }
+
+    eats(other) {
+        const d = Vector.dist(this.pos, other.pos);
+        const touchDistance = this.r + other.r;
+
+        if (this.r > other.r && d < touchDistance) {
+            const sumArea =
+                Math.PI * this.r * this.r +
+                Math.PI * other.r * other.r;
+
+            this.r = Math.sqrt(sumArea / Math.PI);
+            return true;
+        }
+        return false;
+    }
+
+    draw(ctx, hasShield = false) {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (this.name === "Charge") {
+            ctx.fillStyle = "#FFD700";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = `${this.r * 1.2}px Arial, sans-serif`;
+            ctx.fillText("⚡", this.pos.x, this.pos.y);
+        }
+
+        if (this.isPlayer && hasShield) {
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = "rgba(255,215,0,0.8)";
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, this.r + 5, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        if (this.r > 16) {
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#000";
+            ctx.stroke();
+        }
+
+        if (this.r > 25 && this.name !== "" && this.name !== "Charge") {
+            ctx.fillStyle = "#fff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = `${this.r / 3.5}px Poppins, sans-serif`;
+            ctx.fillText(this.name, this.pos.x, this.pos.y + this.r * 0.15);
+        }
+    }
+}
