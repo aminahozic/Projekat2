@@ -69,6 +69,9 @@ function resizeCanvas() {
     }
 }
 window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", () => {
+    setTimeout(resizeCanvas, 100);
+});
 resizeCanvas();
 
 function createFood(count = 800) { 
@@ -223,6 +226,7 @@ function startGame(playerName, playerColor) {
     lastEatTime = Date.now();
     lastEatShrinkTimer = 0;
     gameRunning = true;
+    if (window.setGameRunning) window.setGameRunning(true);
     aetherZone = null;
     aetherTimer = 0;
     oblivionZone = null;
@@ -233,6 +237,7 @@ function startGame(playerName, playerColor) {
 
 function endGame(message) {
     gameRunning = false;
+    if (window.setGameRunning) window.setGameRunning(false);
     
     try { 
         if (soundDefeat) { soundDefeat.currentTime = 0; soundDefeat.play(); }
@@ -243,6 +248,74 @@ function endGame(message) {
     document.getElementById('gameCanvas').style.display = 'none';
 }
 
+
+let lastTapTime = 0;
+let lastTapX = 0;
+let lastTapY = 0;
+
+function checkDoubleTap(x, y) {
+    if (!gameRunning || !blob || !canvas || canvas.style.display === 'none') return false;
+    
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastTapTime;
+    const xDiff = Math.abs(x - lastTapX);
+    const yDiff = Math.abs(y - lastTapY);
+    
+    if (timeDiff < 400 && xDiff < 50 && yDiff < 50) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const canvasX = x - canvasRect.left;
+        const canvasY = y - canvasRect.top;
+        
+        const worldX = (canvasX - canvas.width / 2) / zoom + blob.pos.x;
+        const worldY = (canvasY - canvas.height / 2) / zoom + blob.pos.y;
+        
+        const dist = Math.sqrt(
+            Math.pow(worldX - blob.pos.x, 2) + 
+            Math.pow(worldY - blob.pos.y, 2)
+        );
+        
+        if (dist < blob.r * 1.5 && speedCharge > 0 && speedBoostDuration <= 0) {
+            speedBoostDuration = 300;
+            isChargeBoost = true;
+            speedCharge--;
+            try { if(soundBoost)soundBoost.play(); } catch (e) {}
+            lastTapTime = 0;
+            return true;
+        }
+    }
+    
+    lastTapTime = currentTime;
+    lastTapX = x;
+    lastTapY = y;
+    return false;
+}
+
+canvas.addEventListener('dblclick', (e) => {
+    checkDoubleTap(e.clientX, e.clientY);
+});
+
+let touchStartTime = 0;
+let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+        touchStartTime = Date.now();
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }
+});
+
+canvas.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length > 0) {
+        const touch = e.changedTouches[0];
+        const touchDuration = Date.now() - touchStartTime;
+        
+        if (touchDuration < 300) {
+            checkDoubleTap(touch.clientX, touch.clientY);
+        }
+    }
+});
 
 function animate() {
     if (!gameRunning || !ctx || !blob) { 
@@ -601,9 +674,11 @@ document.getElementById('pokreni-igru').addEventListener('click', ()=>{
 });
 
 document.getElementById('restart-game-button').addEventListener('click', ()=>{
+    gameRunning = false;
+    if (window.setGameRunning) window.setGameRunning(false);
     defeatScreen.style.display='none';
     lobbyScreen.style.display='flex';
-    lobbyScreen.style.opacity='1';
+    lobbyScreen.opacity='1';
 }); 
 
 document.getElementById('prikazi-pravila').addEventListener('click', () => {

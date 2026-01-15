@@ -29,6 +29,13 @@ body {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    -webkit-tap-highlight-color: transparent;
 }
 
 #lobby-ekran, #defeat-screen {
