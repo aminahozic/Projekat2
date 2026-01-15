@@ -1,10 +1,11 @@
 if (!window.canvas) {
     window.canvas = document.getElementById("gameCanvas");
 }
-const canvas = window.canvas;
-const ctx = canvas ? canvas.getContext("2d") : null;
+const ctx = window.canvas ? window.canvas.getContext("2d") : null;
 
-if (!canvas || !ctx) console.error("Canvas ili kontekst nisu pronađeni!");
+if (!window.canvas || !ctx) console.error("Canvas ili kontekst nisu pronađeni!");
+
+const canvas = window.canvas;
 
 const lobbyScreen = document.getElementById('lobby-ekran');
 const rulesScreen = document.getElementById('rules-screen');
