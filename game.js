@@ -1,4 +1,7 @@
-const canvas = document.getElementById("gameCanvas");
+if (!window.canvas) {
+    window.canvas = document.getElementById("gameCanvas");
+}
+const canvas = window.canvas;
 const ctx = canvas ? canvas.getContext("2d") : null;
 
 if (!canvas || !ctx) console.error("Canvas ili kontekst nisu pronađeni!");
