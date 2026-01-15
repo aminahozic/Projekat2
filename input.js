@@ -38,11 +38,11 @@ window.addEventListener('touchmove', (e) => {
 }, { passive: false });
 
 window.addEventListener('touchend', (e) => {
-    const canvasEl = getCanvas();
-    if (isGameRunning && canvasEl && canvasEl.style.display !== 'none') {
-        e.preventDefault();
+    if (e.changedTouches.length > 0) {
+        window.mouse.x = e.changedTouches[0].clientX;
+        window.mouse.y = e.changedTouches[0].clientY;
     }
-}, { passive: false });
+});
 
 window.setGameRunning = (running) => {
     isGameRunning = running;
