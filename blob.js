@@ -52,13 +52,13 @@ class Blob {
     update(mouse, canvas, boostDuration = 0, controlMode = 'mouse', keys = null, hasShield = false, isInOblivionZone = false) {
         this.isHunting = false;
 
-        let mult = this.isPlayer ? 1 : window.DIFFICULTY_SETTINGS[window.difficultyMode].npcSpeedMultiplier;
         let baseSpeed = 9.0 / Math.sqrt(this.r / 30);
-        let minSpeed = this.isPlayer ? 4.5 : 3.5;
-        let maxSpeed = Math.max(baseSpeed, minSpeed) * mult;
+        let minSpeed = 4.5;
+        let maxSpeed = Math.max(baseSpeed, minSpeed);
 
         let target = new Vector(0, 0);
-        let lerpFactor = this.isPlayer ? 0.12 : (this.r < 30 ? 0.92 : 0.88);
+        
+        let lerpFactor = this.isPlayer ? 0.12 : 0.08; 
 
         if (this.isPlayer && boostDuration > 0) {
             if(window.isChargeBoost){
@@ -69,7 +69,6 @@ class Blob {
         }
 
         if (this.isPlayer) {
-
             if (controlMode === 'mouse') {
                 target = new Vector(
                     mouse.x - canvas.width / 2,
@@ -83,7 +82,6 @@ class Blob {
                 if (keys.KeyS || keys.ArrowDown) dy += 1;
                 target = new Vector(dx * 1000, dy * 1000);
             }
-
         } else {
             const settings = window.DIFFICULTY_SETTINGS[window.difficultyMode];
             const player = window.blob;
@@ -102,9 +100,8 @@ class Blob {
                 
                 if (!isSmart) {
                     target = this.targetPos.sub(this.pos);
-                    maxSpeed *= 0.7;
-                    lerpFactor = this.r < 30 ? 0.92 : 0.88;
-                    if (Vector.dist(this.pos, this.targetPos) < 350) {
+                    lerpFactor = 0.05;
+                    if (Vector.dist(this.pos, this.targetPos) < 400) {
                         this.setNewTarget();
                     }
                 } else {
@@ -116,42 +113,40 @@ class Blob {
                     if (this.r < player.r * 0.95 && d < settings.fleeDistance + this.r * 1.5) {
                         if (nearEdgeX || nearEdgeY) {
                             target = this.targetPos.sub(this.pos);
-                            lerpFactor = this.r < 30 ? 0.93 : 0.90;
-                            if (Vector.dist(this.pos, this.targetPos) < 350) {
+                            lerpFactor = 0.07;
+                            if (Vector.dist(this.pos, this.targetPos) < 400) {
                                 this.setNewTarget();
                             }
                         } else {
                             target = this.pos.sub(player.pos);
-                            lerpFactor = this.r < 30 ? 0.92 : 0.88;
+                            lerpFactor = 0.1;
                         }
                     }
                     else if (this.r > player.r * 1.2) {
                         if (Math.random() < settings.npcAggression) {
                             if (nearEdgeX || nearEdgeY) {
                                 target = this.targetPos.sub(this.pos);
-                                lerpFactor = this.r < 30 ? 0.93 : 0.90;
-                                if (Vector.dist(this.pos, this.targetPos) < 350) {
+                                lerpFactor = 0.07;
+                                if (Vector.dist(this.pos, this.targetPos) < 400) {
                                     this.setNewTarget();
                                 }
                             } else {
                                 target = player.pos.sub(this.pos);
                                 this.isHunting = true;
-                                lerpFactor = (this.r < 30 ? 0.85 : 0.80) + settings.npcAggression * 0.1;
+                                lerpFactor = 0.06 + settings.npcAggression * 0.05; 
                             }
                         } else {
                             target = this.targetPos.sub(this.pos);
-                            maxSpeed *= 0.7;
-                            lerpFactor = this.r < 30 ? 0.92 : 0.88;
-                            if (Vector.dist(this.pos, this.targetPos) < 350) {
+                            lerpFactor = 0.05;
+                            if (Vector.dist(this.pos, this.targetPos) < 400) {
                                 this.setNewTarget();
                             }
                         }
                     }
                     else {
                         target = this.targetPos.sub(this.pos);
-                        maxSpeed *= 0.7;
-                        lerpFactor = this.r < 30 ? 0.92 : 0.88;
-                        if (Vector.dist(this.pos, this.targetPos) < 350) {
+                        lerpFactor = 0.05;
+                        if (Vector.dist(this.pos, this.targetPos) < 400) {
                             this.setNewTarget();
                         }
                     }
@@ -161,17 +156,11 @@ class Blob {
 
         target.setMag(maxSpeed);
         this.vel.lerp(target, lerpFactor);
+        
         if (!this.isPlayer) {
-            if (this.isHunting) {
-                this.vel.mult(0.998);
-            } else {
-                if (this.r < 30) {
-                    this.vel.mult(0.998);
-                } else {
-                    this.vel.mult(0.996);
-                }
-            }
+            this.vel.mult(0.99); 
         }
+        
         this.pos.add(this.vel);
 
         const limit = window.boundary || 5000;
@@ -183,17 +172,16 @@ class Blob {
         
         if (!this.isPlayer) {
             if (oldX !== this.pos.x || oldY !== this.pos.y) {
-                this.vel.x *= 0.08;
-                this.vel.y *= 0.08;
+                this.vel.x *= 0.5;
+                this.vel.y *= 0.5;
                 const distToTarget = Vector.dist(this.pos, this.targetPos);
-                if (distToTarget < 400 || Math.abs(this.pos.x - (-limit + margin)) < 250 || Math.abs(this.pos.x - (limit - margin)) < 250 ||
+                if (distToTarget < 450 || Math.abs(this.pos.x - (-limit + margin)) < 250 || Math.abs(this.pos.x - (limit - margin)) < 250 ||
                     Math.abs(this.pos.y - (-limit + margin)) < 250 || Math.abs(this.pos.y - (limit - margin)) < 250) {
                     this.setNewTarget();
-                    lerpFactor = this.r < 30 ? 0.95 : 0.92;
                 }
             } else {
                 const distToTarget = Vector.dist(this.pos, this.targetPos);
-                if (distToTarget < 250) {
+                if (distToTarget < 300) {
                     this.setNewTarget();
                 }
             }
