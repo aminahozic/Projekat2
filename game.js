@@ -247,9 +247,9 @@ function endGame(message) {
         if (soundDefeat) { soundDefeat.currentTime = 0; soundDefeat.play(); }
     } catch (e) {}
     
+    canvas.style.display = 'none';
     defeatScreen.style.display = 'flex';
     document.getElementById('defeat-message').innerText = message;
-    document.getElementById('gameCanvas').style.display = 'none';
 }
 
 
@@ -680,9 +680,10 @@ document.getElementById('pokreni-igru').addEventListener('click', ()=>{
 document.getElementById('restart-game-button').addEventListener('click', ()=>{
     gameRunning = false;
     if (window.setGameRunning) window.setGameRunning(false);
+    canvas.style.display = 'none';
     defeatScreen.style.display='none';
     lobbyScreen.style.display='flex';
-    lobbyScreen.opacity='1';
+    lobbyScreen.style.opacity='1';
 }); 
 
 document.getElementById('prikazi-pravila').addEventListener('click', () => {
